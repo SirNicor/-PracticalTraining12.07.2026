@@ -1,0 +1,61 @@
+
+@startchen
+
+entity Groups {
+    ID
+    NameGroup : string
+}
+
+entity Teachers {
+    ID
+    FIO : string
+}
+
+entity Classrooms {
+    ID
+    NumberClassRooms : string
+}
+
+entity Subjects {
+    ID
+    NameSubjects : string
+}
+
+entity Lesson {
+    ID
+    DateStart : TimeOnly
+    DateEnd : TimeOnly
+    DayOfWeek : int      
+    NumberOfWeer : int
+}
+
+relationship LessonGroup {
+    Lesson -N- LessonGroup
+    LessonGroup -N- Groups
+}
+
+relationship LessonTeacher {
+    Lesson -N- LessonTeacher
+    LessonTeacher -1- Teachers
+}
+
+relationship LessonSubject {
+    Lesson -N- LessonSubject
+    LessonSubject -1- Subjects
+}
+
+relationship LessonClassroom {
+    Lesson -N- LessonClassroom
+    LessonClassroom -1- Classrooms
+}
+
+relationship GroupSubject {
+    Groups -N- GroupSubject
+    GroupSubject -N- Subjects
+}
+
+relationship TeacherSubject {
+    Teachers -N- TeacherSubject
+    TeacherSubject -N- Subjects
+}
+@endchen
