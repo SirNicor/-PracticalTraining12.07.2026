@@ -12,7 +12,7 @@ public class SubjectRepository : ISubjectRepository
         _context = context;
     }
 
-    public async Task<Subject?> GetSubjectmForNameAsync(string name)
+    public async Task<Subject?> GetSubjectsForNameAsync(string name)
     {
         var subject = await _context.Subjects.Where(p => p.NameSubjects == name)
             .FirstOrDefaultAsync();

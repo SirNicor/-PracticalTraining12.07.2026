@@ -14,7 +14,7 @@ public static class AddedDI
         services.AddScoped<IClassroomRepository, ClassroomRepository>();
         services.AddScoped<ITeacherRepository, TeacherRepository>();
         services.AddScoped<IGroupRepository, GroupRepository>();
-        services.AddScoped<IClassroomRepository, ClassroomRepository>();
-        services.AddScoped<IClassroomRepository, ClassroomRepository>();
+        services.AddScoped<ISubjectRepository, SubjectRepository>();
+        services.AddScoped<ILessonRepository, LessonRepository>();
     }
 }

@@ -47,7 +47,11 @@ public class GroupRepository : IGroupRepository
             var subjects = await _context.Subjects
                 .Where(s => groupDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
-
+            if (subjects.Count != groupDto.SubjectsName.Count)
+            {
+                return null;
+            }
+            _context.Groups.Add(group);
             foreach (var subject in subjects)
             {
                 group.GroupSubjects.Add(new GroupSubject
@@ -56,7 +60,6 @@ public class GroupRepository : IGroupRepository
                 });
             }
     
-            _context.Groups.Add(group);
             await _context.SaveChangesAsync();
 
             return group.ID;
@@ -74,7 +77,7 @@ public class GroupRepository : IGroupRepository
             var group = await _context.Groups
                 .Include(g => g.GroupSubjects)
                 .FirstOrDefaultAsync(g => g.ID == groupDto.ID);
-
+            
             if (group == null)
             {
                 return null;
@@ -87,7 +90,10 @@ public class GroupRepository : IGroupRepository
             var subjects = await _context.Subjects
                 .Where(s => groupDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
-
+            if (subjects.Count != groupDto.SubjectsName.Count)
+            {
+                return null;
+            }
             foreach (var subject in subjects)
             {
                 group.GroupSubjects.Add(new GroupSubject

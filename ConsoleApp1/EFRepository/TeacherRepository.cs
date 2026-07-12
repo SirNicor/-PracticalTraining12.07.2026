@@ -47,7 +47,11 @@ public class TeacherRepository : ITeacherRepository
             var subjects = await _context.Subjects
                 .Where(s => teacherDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
-
+            
+            if (subjects.Count != teacherDto.SubjectsName.Count)
+            {
+                return null;
+            }
             foreach (var subject in subjects)
             {
                 teacher.TeacherSubjects.Add(new TeacherSubject
@@ -55,7 +59,7 @@ public class TeacherRepository : ITeacherRepository
                     SubjectID = subject.ID
                 });
             }
-
+            
             _context.Teachers.Add(teacher);
             await _context.SaveChangesAsync();
 
@@ -87,7 +91,10 @@ public class TeacherRepository : ITeacherRepository
             var subjects = await _context.Subjects
                 .Where(s => teacherDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
-
+            if (subjects.Count != teacherDto.SubjectsName.Count)
+            {
+                return null;
+            }
             foreach (var subject in subjects)
             {
                 teacher.TeacherSubjects.Add(new TeacherSubject

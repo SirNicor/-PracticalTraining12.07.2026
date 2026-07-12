@@ -58,16 +58,16 @@ public class LessonRepository : ILessonRepository
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            if (!await ConflictSearch(dto))
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.FIO == dto.TeacherName);
             var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.NumberClassroom == dto.ClassroomNumber);
             var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.NameSubjects == dto.SubjectName);
 
             if (teacher == null || classroom == null || subject == null)
-            {
-                await transaction.RollbackAsync();
-                return null;
-            }
-            if (!await ConflictSearch(dto))
             {
                 await transaction.RollbackAsync();
                 return null;
@@ -86,6 +86,10 @@ public class LessonRepository : ILessonRepository
             var groups = await _context.Groups
                 .Where(g => dto.GroupNames.Contains(g.NameGroup))
                 .ToListAsync();
+            if (dto.GroupNames.Count != groups.Count)
+            {
+                return null;
+            }
             foreach (var group in groups)
             {
                 _context.LessonGroups.Add(new LessonGroup
@@ -110,6 +114,11 @@ public class LessonRepository : ILessonRepository
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            if (!await ConflictSearch(dto))
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
             var lesson = await _context.Lessons
                 .Include(l => l.LessonGroups)
                 .FirstOrDefaultAsync(l => l.ID == dto.ID);
@@ -126,11 +135,6 @@ public class LessonRepository : ILessonRepository
                 await transaction.RollbackAsync();
                 return null;
             }
-            if (!await ConflictSearch(dto))
-            {
-                await transaction.RollbackAsync();
-                return null;
-            }
             lesson.DateStart = dto.DateStart;
             lesson.DayOfWeek = dto.DayOfWeek;
             lesson.NumberOfWeek = dto.NumberOfWeek;
@@ -143,6 +147,10 @@ public class LessonRepository : ILessonRepository
             var groups = await _context.Groups
                 .Where(g => dto.GroupNames.Contains(g.NameGroup))
                 .ToListAsync();
+            if (dto.GroupNames.Count != groups.Count)
+            {
+                return null;
+            }
             foreach (var group in groups)
             {
                 _context.LessonGroups.Add(new LessonGroup
@@ -180,12 +188,30 @@ public class LessonRepository : ILessonRepository
 
     public async Task<bool> ConflictSearch(LessonDTOCreate dto)
     {
+        var groupsHaveSubject = await _context.Groups
+            .Where(g => dto.GroupNames.Contains(g.NameGroup))
+            .AllAsync(g => g.GroupSubjects.Any(gs => gs.Subject.NameSubjects == dto.SubjectName));
+        if (!groupsHaveSubject)
+        {
+            return false;  
+        }
+        var teachersHaveSubject = await _context.TeacherSubjects.AnyAsync(ts => ts.Subject.NameSubjects == dto.SubjectName && ts.Teacher.FIO == dto.TeacherName);
+        if (!teachersHaveSubject)
+        {
+            return false;  
+        }
         var dateEndDto = dto.DateStart.AddMinutes(90);
         var dateStartMinus90 = dto.DateStart.AddMinutes(-90);
-        return !await _context.Lessons.AnyAsync(l => l.ID != dto.ID && l.DateStart < dateEndDto && l.DateStart > dateStartMinus90 && l.NumberOfWeek == dto.NumberOfWeek && l.DayOfWeek == dto.DayOfWeek &&
-                                            (l.Classroom.NumberClassroom == dto.ClassroomNumber ||
-                                             l.Teacher.FIO == dto.TeacherName ||
-                                             l.LessonGroups.Any(lg =>
-                                                 dto.GroupNames.Contains(lg.Group.NameGroup))));
+        var result = await _context.Lessons.AnyAsync(l =>
+            l.ID != dto.ID &&  
+            l.DateStart < dateEndDto &&
+            l.DateStart > dateStartMinus90 &&
+            l.NumberOfWeek == dto.NumberOfWeek &&
+            l.DayOfWeek == dto.DayOfWeek &&
+            (l.Classroom.NumberClassroom == dto.ClassroomNumber ||
+             l.Teacher.FIO == dto.TeacherName ||
+             l.LessonGroups.Any(lg => dto.GroupNames.Contains(lg.Group.NameGroup))));
+        Console.WriteLine(result);
+        return !result;
     }
 }

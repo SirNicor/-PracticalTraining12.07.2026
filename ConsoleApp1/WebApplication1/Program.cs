@@ -1,6 +1,7 @@
 using EFRepository;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1;
+using WebApplication1.Api;
 
 try
 {
@@ -12,6 +13,11 @@ try
         var dbContext = scope.ServiceProvider.GetRequiredService<PracticeDbContext>();
         dbContext.Database.Migrate(); 
     }
+    app.AddedApiTeacher();
+    app.AddedApiSubject();
+    app.AddedApiLesson();
+    app.AddedApiClassroom();
+    app.AddedApiGroup();    
     app.Run();
 }
 catch (Exception ex)
