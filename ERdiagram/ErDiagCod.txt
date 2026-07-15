@@ -24,7 +24,6 @@ entity Subjects {
 entity Lesson {
     ID
     DateStart : TimeOnly
-    DateEnd : TimeOnly
     DayOfWeek : int      
     NumberOfWeer : int
     Lesson -1- Teachers

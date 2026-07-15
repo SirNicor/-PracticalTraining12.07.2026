@@ -6,7 +6,7 @@ using WebApplication1.Api;
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.Services.AddInfrastructureServices(builder.Configuration);
+    builder.Services.AddInfrastructureServices(builder.Configuration);  
     var app = builder.Build();      
     app.UseStaticFiles();
     app.UseRouting();

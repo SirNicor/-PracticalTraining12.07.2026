@@ -5,31 +5,34 @@ namespace EFRepository;
 
 public class ClassroomRepository : IClassroomRepository
 {
-    private readonly PracticeDbContext _context;
+    private readonly IDbContextFactory<PracticeDbContext> _dbFactory;
 
-    public ClassroomRepository(PracticeDbContext context)
+    public ClassroomRepository(IDbContextFactory<PracticeDbContext> dbFactory)
     {
-        _context = context;
+        _dbFactory = dbFactory;
     }
     public async Task<Classroom?> GetClassroomForNumberAsync(string number)
     {
-        var classroom = await _context.Classrooms.Where(p => p.NumberClassroom == number)
+        await using var context = _dbFactory.CreateDbContext();
+        var classroom = await context.Classrooms.Where(p => p.NumberClassroom == number)
             .FirstOrDefaultAsync();
         return classroom;
     }
 
     public async Task<List<Classroom>?> GetAllClassroomsAsync()
     {
-        var classroom = await _context.Classrooms.ToListAsync();
+        await using var context = _dbFactory.CreateDbContext();
+        var classroom = await context.Classrooms.ToListAsync();
         return classroom;
     }
 
     public async Task<int?> CreateAsync(Classroom classroom)
     {
+        await using var context = _dbFactory.CreateDbContext();
         try
         {
-            _context.Classrooms.Add(classroom);
-            await _context.SaveChangesAsync();
+            context.Classrooms.Add(classroom);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException e)
         {
@@ -40,15 +43,16 @@ public class ClassroomRepository : IClassroomRepository
 
     public async Task<int?> UpdateAsync(Classroom classroom)
     {
+        await using var context = _dbFactory.CreateDbContext();
         try
         {
-            var trackedEntity = _context.Classrooms.Local.FirstOrDefault(s => s.ID == classroom.ID);
+            var trackedEntity = context.Classrooms.Local.FirstOrDefault(s => s.ID == classroom.ID);
             if (trackedEntity != null)
             {
-                _context.Entry(trackedEntity).State = EntityState.Detached;
+                context.Entry(trackedEntity).State = EntityState.Detached;
             }
-            _context.Classrooms.Update(classroom);
-            await _context.SaveChangesAsync();
+            context.Classrooms.Update(classroom);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException e)
         {
@@ -59,13 +63,14 @@ public class ClassroomRepository : IClassroomRepository
 
     public async Task<int?> DeleteAsync(int id)
     {
-        var classroom = await _context.Classrooms.FindAsync(id);
+        await using var context = _dbFactory.CreateDbContext();
+        var classroom = await context.Classrooms.FindAsync(id);
         if (classroom == null)
         {
             return null;
         }
-        _context.Classrooms.Remove(classroom);
-        await _context.SaveChangesAsync();
+        context.Classrooms.Remove(classroom);
+        await context.SaveChangesAsync();
         return id;
     }
 }

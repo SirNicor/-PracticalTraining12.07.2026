@@ -13,14 +13,14 @@ public static class AddedDI
         {
             options.DetailedErrors = true;
         });
-        services.AddDbContext<PracticeDbContext>(
+        services.AddDbContextFactory<PracticeDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly("EFRepository")));
         services.AddHttpClient();
-        services.AddScoped<IClassroomRepository, ClassroomRepository>();
-        services.AddScoped<ITeacherRepository, TeacherRepository>();
-        services.AddScoped<IGroupRepository, GroupRepository>();
-        services.AddScoped<ISubjectRepository, SubjectRepository>();
-        services.AddScoped<ILessonRepository, LessonRepository>();
+        services.AddTransient<IClassroomRepository, ClassroomRepository>();
+        services.AddTransient<ITeacherRepository, TeacherRepository>();
+        services.AddTransient<IGroupRepository, GroupRepository>();
+        services.AddTransient<ISubjectRepository, SubjectRepository>();
+        services.AddTransient<ILessonRepository, LessonRepository>();
     }
 }

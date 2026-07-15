@@ -5,32 +5,35 @@ namespace EFRepository;
 
 public class SubjectRepository : ISubjectRepository
 {
-    private readonly PracticeDbContext _context;
+    private readonly IDbContextFactory<PracticeDbContext> _dbFactory;
 
-    public SubjectRepository(PracticeDbContext context)
+    public SubjectRepository(IDbContextFactory<PracticeDbContext> dbFactory)
     {
-        _context = context;
+        _dbFactory = dbFactory;
     }
 
     public async Task<Subject?> GetSubjectsForNameAsync(string name)
     {
-        var subject = await _context.Subjects.Where(p => p.NameSubjects == name)
+        await using var context = _dbFactory.CreateDbContext();
+        var subject = await context.Subjects.Where(p => p.NameSubjects == name)
             .FirstOrDefaultAsync();
         return subject;
     }
 
     public async Task<List<Subject>?> GetAllSubjectsAsync()
     {
-        var subjects = await _context.Subjects.ToListAsync();
+        await using var context = _dbFactory.CreateDbContext();
+        var subjects = await context.Subjects.ToListAsync();
         return subjects;
     }
 
     public async Task<int?> CreateAsync(Subject subject)
     {
+        await using var context = _dbFactory.CreateDbContext();
         try
         {
-            _context.Subjects.Add(subject);
-            await _context.SaveChangesAsync();
+            context.Subjects.Add(subject);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException e)
         {
@@ -41,15 +44,16 @@ public class SubjectRepository : ISubjectRepository
 
     public async Task<int?> UpdateAsync(Subject subject)
     {
+        await using var context = _dbFactory.CreateDbContext();
         try
         {
-            var trackedEntity = _context.Subjects.Local.FirstOrDefault(s => s.ID == subject.ID);
+            var trackedEntity = context.Subjects.Local.FirstOrDefault(s => s.ID == subject.ID);
             if (trackedEntity != null)
             {
-                _context.Entry(trackedEntity).State = EntityState.Detached;
+                context.Entry(trackedEntity).State = EntityState.Detached;
             }
-            _context.Subjects.Update(subject);
-            await _context.SaveChangesAsync();
+            context.Subjects.Update(subject);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException e)
         {
@@ -60,13 +64,14 @@ public class SubjectRepository : ISubjectRepository
 
     public async Task<int?> DeleteAsync(int ID)
     {
-        var subject = await _context.Subjects.FindAsync(ID);
+        await using var context = _dbFactory.CreateDbContext();
+        var subject = await context.Subjects.FindAsync(ID);
         if (subject == null)
         {
             return null;
         }
-        _context.Subjects.Remove(subject);
-        await _context.SaveChangesAsync();
+        context.Subjects.Remove(subject);
+        await context.SaveChangesAsync();
         return ID;
     }
 }

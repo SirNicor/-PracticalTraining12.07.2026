@@ -7,15 +7,16 @@ namespace EFRepository;
 
 public class GroupRepository : IGroupRepository
 {
-    private readonly PracticeDbContext _context;
+    private readonly IDbContextFactory<PracticeDbContext> _dbFactory;
 
-    public GroupRepository(PracticeDbContext context)
+    public GroupRepository(IDbContextFactory<PracticeDbContext> dbFactory)
     {
-        _context = context;
+        _dbFactory = dbFactory;
     }
     public async Task<GroupDto?> GetGroupForNameAsync(string name)
     {
-        return await _context.Groups
+        await using var context = _dbFactory.CreateDbContext();
+        return await context.Groups
             .Where(g => g.NameGroup == name)
             .Select(g => new GroupDto
             {
@@ -27,7 +28,8 @@ public class GroupRepository : IGroupRepository
 
     public async Task<List<GroupDto>?> GetAllGroupsAsync()
     {
-        return await _context.Groups.Select(g => new GroupDto
+        await using var context = _dbFactory.CreateDbContext();
+        return await context.Groups.Select(g => new GroupDto
             {
                 ID = g.ID,
                 NameGroup = g.NameGroup,
@@ -37,6 +39,7 @@ public class GroupRepository : IGroupRepository
 
     public async Task<int?> CreateAsync(GroupDto groupDto)
     {
+        await using var context = _dbFactory.CreateDbContext();
         try
         {
             var group = new Group
@@ -44,14 +47,14 @@ public class GroupRepository : IGroupRepository
                 NameGroup = groupDto.NameGroup
             };
 
-            var subjects = await _context.Subjects
+            var subjects = await context.Subjects
                 .Where(s => groupDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
             if (subjects.Count != groupDto.SubjectsName.Count)
             {
                 return null;
             }
-            _context.Groups.Add(group);
+            context.Groups.Add(group);
             foreach (var subject in subjects)
             {
                 group.GroupSubjects.Add(new GroupSubject
@@ -60,7 +63,7 @@ public class GroupRepository : IGroupRepository
                 });
             }
     
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return group.ID;
         }
@@ -72,9 +75,10 @@ public class GroupRepository : IGroupRepository
 
     public async Task<int?> UpdateAsync(GroupDto groupDto)
     {
+        await using var context = _dbFactory.CreateDbContext();
         try
         {
-            var group = await _context.Groups
+            var group = await context.Groups
                 .Include(g => g.GroupSubjects)
                 .FirstOrDefaultAsync(g => g.ID == groupDto.ID);
             
@@ -87,7 +91,7 @@ public class GroupRepository : IGroupRepository
 
             group.GroupSubjects.Clear();
 
-            var subjects = await _context.Subjects
+            var subjects = await context.Subjects
                 .Where(s => groupDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
             if (subjects.Count != groupDto.SubjectsName.Count)
@@ -102,7 +106,7 @@ public class GroupRepository : IGroupRepository
                 });
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return group.ID;
         }
@@ -114,16 +118,17 @@ public class GroupRepository : IGroupRepository
 
     public async Task<int?> DeleteAsync(int ID)
     {
-        var group = await _context.Groups
+        await using var context = _dbFactory.CreateDbContext();
+        var group = await context.Groups
             .Include(g => g.GroupSubjects) 
             .FirstOrDefaultAsync(g => g.ID == ID);
         if (group == null)
         {
             return null;
         }
-        _context.Groups.Remove(group);
-        _context.GroupSubjects.RemoveRange(group.GroupSubjects);
-        await _context.SaveChangesAsync();
+        context.Groups.Remove(group);
+        context.GroupSubjects.RemoveRange(group.GroupSubjects);
+        await context.SaveChangesAsync();
         return ID;
     }
 }

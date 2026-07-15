@@ -24,14 +24,6 @@ public class PracticeDbContext : DbContext
     public DbSet<LessonGroup> LessonGroups { get; set; }
     public DbSet<TeacherSubject> TeacherSubjects { get; set; }
     public DbSet<GroupSubject> GroupSubjects { get; set; }
-    
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=practicedb;Username=postgres;Password=admin");
-        }
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
